@@ -1,0 +1,114 @@
+#!/usr/bin/sh
+# This script is a Docker CLI Plugin allows users to delay the selection of
+# containers to launch.
+# Users can decide which image to use after determining the container launch
+# options and command line arguments.
+#
+PLUGINNAME=$(basename $0 | sed -e 's|docker-||')
+
+SchemaVersion="0.1.0"
+Vendor="Eldesh Experimental Tools"
+Version="0.1.0"
+ShortDescription="Run a command in a new container created from fzf selected image"
+URL="https://github.com/eldesh/docker-frun"
+
+# Format for displaying information
+# The 3rd whitespace-separeted field will be used as the docker image name.
+FORMAT='{{printf "%-13s %8s %s:%s" .ID .Size .Repository .Tag}}'
+
+# Metadata required for Dockker CLI Plugins
+docker_cli_plugin_metadata() {
+cat <<-EOF
+    {
+        "SchemaVersion"   : "${SchemaVersion}",
+        "Vendor"          : "${Vendor}",
+        "Version"         : "${Version}",
+        "ShortDescription": "${ShortDescription}",
+        "URL"             : "${URL}"
+    }
+EOF
+}
+
+print_usage() {
+cat <<-EOF
+Usage:  docker ${PLUGINNAME} [OPTIONS] -- [COMMAND] [ARG...]
+        docker ${PLUGINNAME} [COMMAND] [ARG...]
+
+$(printf '%s\n' "${ShortDescription}")
+EOF
+}
+
+print_help() {
+	print_usage
+cat <<-EOF
+
+Description:
+  The token '--' is accepted at the position where 'docker run' normally
+  expects IMAGE. This plugin replaces that token with an image name chosen
+  interactively via fzf. Every argument that appears before '--' is forwarded
+  verbatim to docker run as OPTIONS, and every argument after the resolved
+  IMAGE is treated as COMMAND and ARG....  When no OPTIONS are required you can
+  omit '--', in which case the first positional argument is interpreted as
+  IMAGE.
+EOF
+}
+
+main() {
+	if [ "$1" = "--help" ]; then
+		print_help
+		exit 0
+	fi
+
+	seen=
+	hyps=0
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			--)
+				hyps=1
+				shift
+				break
+				;;
+			*)
+			   	seen="${seen:+$seen }$1"
+				;;
+		esac
+		shift
+	done
+
+	# '--' is omitted
+	if [ $hyps -eq 0 ]; then
+		set -- $seen
+		seen=
+	fi
+
+	image=$(docker image list \
+		--filter 'dangling=false' \
+		--format "${FORMAT}" \
+		| fzf +m \
+		| awk '{ print $3 }')
+	if [ -z "$image" ]; then
+		echo "docker ${PLUGINNAME} requires an image to be selected." >&2
+		echo "See 'docker ${PLUGINNAME} --help'"                      >&2
+		print_usage                                                   >&2
+		exit 1
+	fi
+	docker run $seen $image $@
+}
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+		docker-cli-plugin-metadata)
+			docker_cli_plugin_metadata
+			exit 0
+			;;
+		${PLUGINNAME})
+			shift
+			break
+			;;
+	esac
+	shift
+done
+
+main "$@"
+
