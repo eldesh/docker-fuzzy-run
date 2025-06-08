@@ -12,9 +12,32 @@ Version="0.1.0"
 ShortDescription="Run a command in a new container created from fzf selected image"
 URL="https://github.com/eldesh/docker-frun"
 
-# Format for displaying information
+# Format of the list of docker images to select.
 # The 3rd whitespace-separeted field will be used as the docker image name.
 FORMAT='{{printf "%-13s %8s %s:%s" .ID .Size .Repository .Tag}}'
+
+# Format for displaying basic information of the selected docker image in the preview window.
+PREVIEW_FORMAT='\
+ID:      {{.Id}}
+Name:
+{{range .RepoTags}}  - {{.}}
+{{end}}
+Created: {{.Created}}
+Size:    {{.Size}} bytes
+OS/Arch: {{.Os}}/{{.Architecture}}
+Label:
+{{range \$l, \$v := .ContainerConfig.Labels}}  {{\$l}}:{{\$v}}
+{{end}}
+Env:
+{{range .Config.Env}}  - {{.}}
+{{end}}
+Cmd:
+{{range .Config.Cmd}}  - {{.}}
+{{end}}
+'
+
+# Key binding for operating the preview window.
+PREVIEW_BIND='ctrl-j:preview-down,ctrl-k:preview-up'
 
 # Metadata required for Dockker CLI Plugins
 docker_cli_plugin_metadata() {
@@ -85,6 +108,11 @@ main() {
 		--filter 'dangling=false' \
 		--format "${FORMAT}" \
 		| fzf +m \
+		  --preview '
+			img=$(echo {} | awk "{ print \$3 }")
+			docker inspect --format "'"${PREVIEW_FORMAT}"'" "${img}"
+			' \
+		  --bind "${PREVIEW_BIND}" \
 		| awk '{ print $3 }')
 	if [ -z "$image" ]; then
 		echo "docker ${PLUGINNAME} requires an image to be selected." >&2
