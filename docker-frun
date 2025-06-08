@@ -111,10 +111,7 @@ main() {
 		--format "${FORMAT}" \
 		| fzf +m \
 		  --prompt "${FZF_PROMPT}" \
-		  --preview '
-			img=$(echo {} | awk "{ print \$3 }")
-			docker inspect --format "'"${PREVIEW_FORMAT}"'" "${img}"
-			' \
+		  --preview 'docker inspect --format "'"${PREVIEW_FORMAT}"'" {-1}' \
 		  --bind "${PREVIEW_BIND}" \
 		| awk '{ print $3 }')
 	if [ -z "$image" ]; then
