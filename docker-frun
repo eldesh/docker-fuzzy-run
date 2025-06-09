@@ -5,12 +5,13 @@
 # options and command line arguments.
 #
 PLUGINNAME=$(basename $0 | sed -e 's|docker-||')
+PLUGINNAME_FULL="docker-fuzzy-run"
 
 SchemaVersion="0.1.0"
 Vendor="Eldesh Experimental Tools"
 Version="0.1.0"
 ShortDescription="Run a command in a new container created from fzf selected image"
-URL="https://github.com/eldesh/docker-frun"
+URL="https://github.com/eldesh/docker-fuzzy-run"
 
 FZF_PROMPT='select image > '
 
@@ -64,6 +65,9 @@ EOF
 }
 
 print_help() {
+	echo "${PLUGINNAME_FULL} - [version: ${Version}]"
+	echo ""
+
 	print_usage
 cat <<-EOF
 
@@ -76,6 +80,11 @@ Description:
   omit '--', in which case the first positional argument is interpreted as
   IMAGE.
 EOF
+
+	echo ""
+	echo "Vendor:"
+	echo "  ${Vendor}"
+	echo "  ${URL}"
 }
 
 main() {
