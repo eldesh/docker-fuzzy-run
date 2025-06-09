@@ -9,7 +9,7 @@ PLUGINNAME_FULL="docker-fuzzy-run"
 
 SchemaVersion="0.1.0"
 Vendor="Eldesh Experimental Tools"
-Version="0.1.0"
+Version="0.1.1"
 ShortDescription="Run a command in a new container created from fzf selected image"
 URL="https://github.com/eldesh/docker-fuzzy-run"
 
