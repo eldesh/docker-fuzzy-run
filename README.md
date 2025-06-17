@@ -29,7 +29,14 @@ DISTRIB_CODENAME=jammy
 DISTRIB_DESCRIPTION="Ubuntu 22.04.4 LTS"
 ```
 
-Fro details see `docker frun --help`.
+For details see `docker frun --help`.
+
+### Key bindings
+
+- ctrl-j/ctrl-k
+    
+    Scroll the preview window up and down.
+
 
 ## Install
 
